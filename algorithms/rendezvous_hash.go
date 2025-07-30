@@ -7,12 +7,14 @@ import (
 // RendezvousHash Rendezvous哈希算法实现（最高随机权重哈希）
 type RendezvousHash struct {
 	nodes []string // 节点列表
+	nodeMap map[string]bool // 节点映射，用于快速检查节点是否已存在
 }
 
 // NewRendezvousHash 创建一个新的Rendezvous哈希
 func NewRendezvousHash() *RendezvousHash {
 	return &RendezvousHash{
 		nodes: make([]string, 0),
+		nodeMap: make(map[string]bool),
 	}
 }
 
@@ -32,16 +34,22 @@ func (rh *RendezvousHash) computeWeight(key string, node string) uint64 {
 
 // AddNode 添加节点
 func (rh *RendezvousHash) AddNode(node string) {
-	for _, n := range rh.nodes {
-		if n == node {
-			return
-		}
+	if _, exists := rh.nodeMap[node]; exists {
+		return
 	}
+	
+	rh.nodeMap[node] = true
 	rh.nodes = append(rh.nodes, node)
 }
 
 // RemoveNode 移除节点
 func (rh *RendezvousHash) RemoveNode(node string) {
+	if _, exists := rh.nodeMap[node]; !exists {
+		return
+	}
+	
+	delete(rh.nodeMap, node)
+	
 	index := -1
 	for i, n := range rh.nodes {
 		if n == node {

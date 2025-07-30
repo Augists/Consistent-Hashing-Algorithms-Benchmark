@@ -7,12 +7,14 @@ import (
 // ModHash 直接哈希取模算法实现
 type ModHash struct {
 	nodes []string // 节点列表
+	nodeMap map[string]bool // 节点映射，用于快速检查节点是否已存在
 }
 
 // NewModHash 创建一个新的直接哈希取模实例
 func NewModHash() *ModHash {
 	return &ModHash{
 		nodes: make([]string, 0),
+		nodeMap: make(map[string]bool),
 	}
 }
 
@@ -27,16 +29,21 @@ func (mh *ModHash) hash(key string) uint64 {
 
 // AddNode 添加节点
 func (mh *ModHash) AddNode(node string) {
-	for _, n := range mh.nodes {
-		if n == node {
-			return
-		}
+	if _, exists := mh.nodeMap[node]; exists {
+		return
 	}
+	mh.nodeMap[node] = true
 	mh.nodes = append(mh.nodes, node)
 }
 
 // RemoveNode 移除节点
 func (mh *ModHash) RemoveNode(node string) {
+	if _, exists := mh.nodeMap[node]; !exists {
+		return
+	}
+
+	delete(mh.nodeMap, node)
+	
 	index := -1
 	for i, n := range mh.nodes {
 		if n == node {

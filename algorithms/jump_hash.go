@@ -7,12 +7,14 @@ import (
 // JumpHash 跳跃一致性哈希算法实现
 type JumpHash struct {
 	nodes []string // 节点列表
+	nodeMap map[string]bool // 节点映射，用于快速检查节点是否已存在
 }
 
 // NewJumpHash 创建一个新的跳跃哈希
 func NewJumpHash() *JumpHash {
 	return &JumpHash{
 		nodes: make([]string, 0),
+		nodeMap: make(map[string]bool),
 	}
 }
 
@@ -41,16 +43,22 @@ func (jh *JumpHash) jumpConsistentHash(keyHash uint64, numBuckets int) int {
 
 // AddNode 添加节点
 func (jh *JumpHash) AddNode(node string) {
-	for _, n := range jh.nodes {
-		if n == node {
-			return
-		}
+	if _, exists := jh.nodeMap[node]; exists {
+		return
 	}
+	
+	jh.nodeMap[node] = true
 	jh.nodes = append(jh.nodes, node)
 }
 
 // RemoveNode 移除节点
 func (jh *JumpHash) RemoveNode(node string) {
+	if _, exists := jh.nodeMap[node]; !exists {
+		return
+	}
+	
+	delete(jh.nodeMap, node)
+	
 	for i, n := range jh.nodes {
 		if n == node {
 			jh.nodes = append(jh.nodes[:i], jh.nodes[i+1:]...)

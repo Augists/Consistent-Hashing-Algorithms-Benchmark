@@ -52,14 +52,7 @@ func (hr *HashRing) AddNode(node string) {
 		hr.ring[hash] = node
 	}
 
-	// 重新排序hash值
-	hr.sortedKeys = make([]uint32, 0, len(hr.ring))
-	for k := range hr.ring {
-		hr.sortedKeys = append(hr.sortedKeys, k)
-	}
-	sort.Slice(hr.sortedKeys, func(i, j int) bool {
-		return hr.sortedKeys[i] < hr.sortedKeys[j]
-	})
+	hr.updateSortedKeys()
 }
 
 // RemoveNode 从哈希环中移除节点
@@ -75,14 +68,7 @@ func (hr *HashRing) RemoveNode(node string) {
 		delete(hr.ring, hash)
 	}
 
-	// 重新排序hash值
-	hr.sortedKeys = make([]uint32, 0, len(hr.ring))
-	for k := range hr.ring {
-		hr.sortedKeys = append(hr.sortedKeys, k)
-	}
-	sort.Slice(hr.sortedKeys, func(i, j int) bool {
-		return hr.sortedKeys[i] < hr.sortedKeys[j]
-	})
+	hr.updateSortedKeys()
 }
 
 // GetNode 根据key获取对应的节点
@@ -107,6 +93,17 @@ func (hr *HashRing) GetNode(key string) string {
 // GetNodesCount 获取当前节点数量
 func (hr *HashRing) GetNodesCount() int {
 	return len(hr.nodes)
+}
+
+// updateSortedKeys 更新 sortedKeys 并排序
+func (hr *HashRing) updateSortedKeys() {
+	hr.sortedKeys = make([]uint32, 0, len(hr.ring))
+	for k := range hr.ring {
+		hr.sortedKeys = append(hr.sortedKeys, k)
+	}
+	sort.Slice(hr.sortedKeys, func(i, j int) bool {
+		return hr.sortedKeys[i] < hr.sortedKeys[j]
+	})
 }
 
 // GetSortedKeysLength 获取排序键的数量（用于测试）

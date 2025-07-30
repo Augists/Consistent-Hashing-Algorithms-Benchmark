@@ -1,0 +1,22 @@
+=== RUN   TestDistribution
+    benchmark_test.go:324: Distribution test with 100 nodes and 100000 keys
+    benchmark_test.go:325: Average assignments per node: 1000
+    benchmark_test.go:326: Mod Hash Std Dev: 29.18
+    benchmark_test.go:327: Hash Ring Std Dev: 83.59
+    benchmark_test.go:328: Jump Hash Std Dev: 25.34
+    benchmark_test.go:329: Maglev Hash Std Dev: 35.74
+    benchmark_test.go:330: Rendezvous Hash Std Dev: 32.13
+    benchmark_test.go:331: AnchorHash Std Dev: 8032.47
+    benchmark_test.go:332: DxHash Std Dev: 331.62
+    benchmark_test.go:333: Multi-Probe CH(k=5) Std Dev: 362.18
+    benchmark_test.go:334: Multi-Probe CH(k=21) Std Dev: 144.83
+--- PASS: TestDistribution (4.31s)
+=== RUN   TestNodeAddition
+    benchmark_test.go:418: ModHash: Adding 10 nodes to 100 initial nodes took 833ns, 9054 keys remapped (90.54%)
+    benchmark_test.go:437: HashRing: Adding 10 nodes to 100 initial nodes took 13.759458ms, 920 keys remapped (9.20%)
+    benchmark_test.go:456: JumpHash: Adding 10 nodes to 100 initial nodes took 625ns, 894 keys remapped (8.94%)
+    benchmark_test.go:475: MaglevHash: Adding 10 nodes to 100 initial nodes took 15.867291ms, 1084 keys remapped (10.84%)
+    benchmark_test.go:494: DxHash: Adding 10 nodes to 100 initial nodes took 2.25µs, 1262 keys remapped (12.62%)
+--- PASS: TestNodeAddition (0.28s)
+PASS
+ok  	consistent_hashing/tests	5.581s

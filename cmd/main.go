@@ -18,13 +18,13 @@ func main() {
 	// 测试添加节点时的重映射
 	testNodeAdditionRemapping()
 
-	// 测试性能
+	// 测试查询性能
 	testPerformance()
 }
 
 func testDistribution() {
 	fmt.Println("\n1. 分布均匀性测试:")
-	
+
 	nodeCount := 100
 	keyCount := 100000
 
@@ -35,8 +35,8 @@ func testDistribution() {
 	mh := algorithms.NewMaglevHash(65537)
 	rh := algorithms.NewRendezvousHash()
 	ah := algorithms.NewAnchorHash(1000)
-	dx := algorithms.NewDxHash()
-	mpch5 := algorithms.NewMPCH(5)  // 使用5个探针
+	dx := algorithms.NewDxHashWithParams(nodeCount) // 使用预设节点数
+	mpch5 := algorithms.NewMPCH(5)   // 使用5个探针
 	mpch21 := algorithms.NewMPCH(21) // 使用21个探针
 
 	// 添加节点
@@ -163,8 +163,8 @@ func testNodeAdditionRemapping() {
 	mh := algorithms.NewMaglevHash(65537)
 	rh := algorithms.NewRendezvousHash()
 	ah := algorithms.NewAnchorHash(2000)
-	dx := algorithms.NewDxHash()
-	mpch5 := algorithms.NewMPCH(5)  // 使用5个探针
+	dx := algorithms.NewDxHashWithParams(initialNodes+addCount) // 使用预设节点数
+	mpch5 := algorithms.NewMPCH(5)   // 使用5个探针
 	mpch21 := algorithms.NewMPCH(21) // 使用21个探针
 
 	// 添加初始节点
@@ -197,7 +197,7 @@ func testNodeAdditionRemapping() {
 	for i := 0; i < initialNodes+addCount; i++ {
 		newNodes[i] = fmt.Sprintf("node_%d", i)
 	}
-	
+
 	start := time.Now()
 	for i := initialNodes; i < initialNodes+addCount; i++ {
 		mod.AddNode(newNodes[i])
@@ -394,7 +394,7 @@ func testNodeAdditionRemapping() {
 }
 
 func testPerformance() {
-	fmt.Println("\n3. 性能测试:")
+	fmt.Println("\n3. 查询性能测试:")
 
 	nodeCount := 1000
 	testKeys := 100000
@@ -406,8 +406,8 @@ func testPerformance() {
 	mh := algorithms.NewMaglevHash(65537)
 	rh := algorithms.NewRendezvousHash()
 	ah := algorithms.NewAnchorHash(2000)
-	dx := algorithms.NewDxHash()
-	mpch5 := algorithms.NewMPCH(5)  // 使用5个探针
+	dx := algorithms.NewDxHashWithParams(nodeCount) // 使用预设节点数
+	mpch5 := algorithms.NewMPCH(5)   // 使用5个探针
 	mpch21 := algorithms.NewMPCH(21) // 使用21个探针
 
 	// 添加节点

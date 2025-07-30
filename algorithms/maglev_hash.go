@@ -4,17 +4,28 @@ import (
 	"crypto/md5"
 )
 
+// NodePreference 节点偏好信息
+type NodePreference struct {
+	offset  int // 偏移量
+	skip    int // 跳跃步长
+	nextIdx int // 下一个排列序号
+}
+
 // MaglevHash Maglev一致性哈希算法实现
 type MaglevHash struct {
-	nodes       []string // 节点列表
-	tableSize   int      // 查找表大小
-	lookupTable []string // 查找表
+	nodes       []string         // 节点列表
+	nodeMap     map[string]bool  // 节点映射，用于快速检查节点是否已存在
+	preferences []NodePreference // 节点偏好信息
+	tableSize   int              // 查找表大小
+	lookupTable []string         // 查找表
 }
 
 // NewMaglevHash 创建一个新的Maglev哈希
 func NewMaglevHash(tableSize int) *MaglevHash {
 	return &MaglevHash{
 		nodes:       make([]string, 0),
+		nodeMap:     make(map[string]bool),
+		preferences: make([]NodePreference, 0),
 		tableSize:   tableSize,
 		lookupTable: make([]string, tableSize),
 	}
@@ -29,16 +40,21 @@ func (mh *MaglevHash) hash(key string, seed int) uint64 {
 	return result & 0x7fffffffffffffff // 清除符号位确保为正数
 }
 
-// generatePermutation 为节点生成偏好序列
-func (mh *MaglevHash) generatePermutation(node string, tableSize int) []int {
-	offset := int(mh.hash(node, 0)) % tableSize
-	skip := int(mh.hash(node, 1))%(tableSize-1) + 1
-
-	permutation := make([]int, tableSize)
-	for j := 0; j < tableSize; j++ {
-		permutation[j] = (offset + j*skip) % tableSize
+// calculatePreference 计算节点的偏好参数
+func (mh *MaglevHash) calculatePreference(node string) NodePreference {
+	offset := int(mh.hash(node, 0)) % mh.tableSize
+	skip := int(mh.hash(node, 1))%(mh.tableSize-1) + 1
+	return NodePreference{
+		offset:  offset,
+		skip:    skip,
+		nextIdx: 0,
 	}
-	return permutation
+}
+
+
+// getPermutationItem 按需计算排列序列中的指定项
+func (mh *MaglevHash) getPermutationItem(preference NodePreference, index int) int {
+	return (preference.offset + index*preference.skip) % mh.tableSize
 }
 
 // populateLookupTable 构建查找表
@@ -50,38 +66,42 @@ func (mh *MaglevHash) populateLookupTable() {
 		return
 	}
 
-	// 为每个节点生成偏好序列
-	permutations := make([][]int, len(mh.nodes))
+	// 初始化节点偏好信息
+	mh.preferences = make([]NodePreference, len(mh.nodes))
 	for i, node := range mh.nodes {
-		permutations[i] = mh.generatePermutation(node, mh.tableSize)
+		mh.preferences[i] = mh.calculatePreference(node)
 	}
 
 	// 初始化查找表
 	for i := range mh.lookupTable {
 		mh.lookupTable[i] = ""
 	}
-	nextIdx := make([]int, len(mh.nodes)) // 每个节点下一个填充位置
+	
+	// 重置每个节点的下一个填充位置
+	for i := range mh.preferences {
+		mh.preferences[i].nextIdx = 0
+	}
 
 	// 按轮次填充查找表
 	filledCount := 0
 	round := 0
 	maxRounds := mh.tableSize * 10 // 防止无限循环
 	for filledCount < mh.tableSize && round < maxRounds {
-		for i, node := range mh.nodes {
+		for i := range mh.nodes {
 			if filledCount >= mh.tableSize {
 				break
 			}
 
 			// 找到下一个可填充的位置
-			for nextIdx[i] < mh.tableSize && mh.lookupTable[permutations[i][nextIdx[i]]] != "" {
-				nextIdx[i]++
+			for mh.preferences[i].nextIdx < mh.tableSize && mh.lookupTable[mh.getPermutationItem(mh.preferences[i], mh.preferences[i].nextIdx)] != "" {
+				mh.preferences[i].nextIdx++
 			}
 
 			// 如果还有可填充的位置，则填充
-			if nextIdx[i] < mh.tableSize {
-				// 直接填充，不需要检查是否为空，因为上面的循环已经确保找到空位
-				mh.lookupTable[permutations[i][nextIdx[i]]] = node
-				nextIdx[i]++
+			if mh.preferences[i].nextIdx < mh.tableSize {
+				pos := mh.getPermutationItem(mh.preferences[i], mh.preferences[i].nextIdx)
+				mh.lookupTable[pos] = mh.nodes[i]
+				mh.preferences[i].nextIdx++
 				filledCount++
 			}
 		}
@@ -91,17 +111,23 @@ func (mh *MaglevHash) populateLookupTable() {
 
 // AddNode 添加节点
 func (mh *MaglevHash) AddNode(node string) {
-	for _, n := range mh.nodes {
-		if n == node {
-			return
-		}
+	if _, exists := mh.nodeMap[node]; exists {
+		return
 	}
+	
+	mh.nodeMap[node] = true
 	mh.nodes = append(mh.nodes, node)
 	mh.populateLookupTable()
 }
 
 // RemoveNode 移除节点
 func (mh *MaglevHash) RemoveNode(node string) {
+	if _, exists := mh.nodeMap[node]; !exists {
+		return
+	}
+	
+	delete(mh.nodeMap, node)
+	
 	index := -1
 	for i, n := range mh.nodes {
 		if n == node {
