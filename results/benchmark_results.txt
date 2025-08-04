@@ -10,13 +10,23 @@
     benchmark_test.go:332: DxHash Std Dev: 331.62
     benchmark_test.go:333: Multi-Probe CH(k=5) Std Dev: 362.18
     benchmark_test.go:334: Multi-Probe CH(k=21) Std Dev: 144.83
---- PASS: TestDistribution (4.31s)
+--- PASS: TestDistribution (5.26s)
 === RUN   TestNodeAddition
-    benchmark_test.go:418: ModHash: Adding 10 nodes to 100 initial nodes took 833ns, 9054 keys remapped (90.54%)
-    benchmark_test.go:437: HashRing: Adding 10 nodes to 100 initial nodes took 13.759458ms, 920 keys remapped (9.20%)
-    benchmark_test.go:456: JumpHash: Adding 10 nodes to 100 initial nodes took 625ns, 894 keys remapped (8.94%)
-    benchmark_test.go:475: MaglevHash: Adding 10 nodes to 100 initial nodes took 15.867291ms, 1084 keys remapped (10.84%)
-    benchmark_test.go:494: DxHash: Adding 10 nodes to 100 initial nodes took 2.25µs, 1262 keys remapped (12.62%)
---- PASS: TestNodeAddition (0.28s)
+    benchmark_test.go:418: ModHash: Adding 10 nodes to 100 initial nodes took 959ns, 9054 keys remapped (90.54%)
+    benchmark_test.go:437: HashRing: Adding 10 nodes to 100 initial nodes took 16.275ms, 920 keys remapped (9.20%)
+    benchmark_test.go:456: JumpHash: Adding 10 nodes to 100 initial nodes took 1.333µs, 894 keys remapped (8.94%)
+    benchmark_test.go:475: MaglevHash: Adding 10 nodes to 100 initial nodes took 34.179ms, 1084 keys remapped (10.84%)
+    benchmark_test.go:494: DxHash: Adding 10 nodes to 100 initial nodes took 15.666µs, 1262 keys remapped (12.62%)
+--- PASS: TestNodeAddition (0.37s)
 PASS
-ok  	consistent_hashing/tests	5.581s
+ok  	consistent_hashing/tests	6.316s
+
+BenchmarkModHash-8          	10789398	       117.5 ns/op
+BenchmarkHashRing-8         	 5020977	       226.9 ns/op
+BenchmarkJumpHash-8         	 6732027	       177.8 ns/op
+BenchmarkMaglevHash-8       	 9516111	       127.4 ns/op
+BenchmarkRendezvousHash-8   	   10000	    112022 ns/op
+BenchmarkAnchorHash-8       	 1850599	       655.8 ns/op
+BenchmarkDxHash-8           	 3246735	       366.7 ns/op
+BenchmarkMPCH5-8            	    9397	    127309 ns/op
+BenchmarkMPCH21-8           	    7450	    163589 ns/op

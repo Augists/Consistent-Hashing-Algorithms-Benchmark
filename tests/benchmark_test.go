@@ -47,10 +47,30 @@ func BenchmarkModHash(b *testing.B) {
 	}
 }
 
-// BenchmarkHashRing 哈希环算法基准测试
+// BenchmarkHashRing 哈希环算法基准测试(160个虚拟节点)
 func BenchmarkHashRing(b *testing.B) {
 	// 创建哈希环实例
 	hr := consistent_hashing.NewHashRing(160)
+
+	// 添加1000个节点
+	nodes := generateTestNodes(1000)
+	for _, node := range nodes {
+		hr.AddNode(node)
+	}
+
+	// 生成测试键
+	keys := generateTestKeys(b.N)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		hr.GetNode(keys[i%len(keys)])
+	}
+}
+
+// BenchmarkHashRing40 哈希环算法基准测试(40个虚拟节点)
+func BenchmarkHashRing40(b *testing.B) {
+	// 创建哈希环实例
+	hr := consistent_hashing.NewHashRing(40)
 
 	// 添加1000个节点
 	nodes := generateTestNodes(1000)
@@ -87,10 +107,30 @@ func BenchmarkJumpHash(b *testing.B) {
 	}
 }
 
-// BenchmarkMaglevHash Maglev哈希算法基准测试
+// BenchmarkMaglevHash Maglev哈希算法基准测试(65537表长)
 func BenchmarkMaglevHash(b *testing.B) {
 	// 创建Maglev哈希实例，表大小为65537
 	mh := consistent_hashing.NewMaglevHash(65537)
+
+	// 添加1000个节点
+	nodes := generateTestNodes(1000)
+	for _, node := range nodes {
+		mh.AddNode(node)
+	}
+
+	// 生成测试键
+	keys := generateTestKeys(b.N)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		mh.GetNode(keys[i%len(keys)])
+	}
+}
+
+// BenchmarkMaglevHash2039 Maglev哈希算法基准测试(2039表长)
+func BenchmarkMaglevHash2039(b *testing.B) {
+	// 创建Maglev哈希实例，表大小为2039
+	mh := consistent_hashing.NewMaglevHash(2039)
 
 	// 添加1000个节点
 	nodes := generateTestNodes(1000)
@@ -127,7 +167,7 @@ func BenchmarkRendezvousHash(b *testing.B) {
 	}
 }
 
-// BenchmarkAnchorHash AnchorHash算法基准测试
+// BenchmarkAnchorHash AnchorHash算法基准测试(2000长度)
 func BenchmarkAnchorHash(b *testing.B) {
 	// 创建AnchorHash实例
 	ah := consistent_hashing.NewAnchorHash(2000)
@@ -215,10 +255,12 @@ func TestDistribution(t *testing.T) {
 	// 创建各种算法实例
 	mod := consistent_hashing.NewModHash()
 	hr := consistent_hashing.NewHashRing(160)
+	hr40 := consistent_hashing.NewHashRing(40) // 添加40个虚拟节点的测试
 	jh := consistent_hashing.NewJumpHash()
 	mh := consistent_hashing.NewMaglevHash(65537)
+	mh2039 := consistent_hashing.NewMaglevHash(2039) // 添加2039表长的测试
 	rh := consistent_hashing.NewRendezvousHash()
-	ah := consistent_hashing.NewAnchorHash(1000)
+	ah := consistent_hashing.NewAnchorHash(2000)
 	dx := consistent_hashing.NewDxHash()
 	mpch5 := consistent_hashing.NewMPCH(5)
 	mpch21 := consistent_hashing.NewMPCH(21)
@@ -228,8 +270,10 @@ func TestDistribution(t *testing.T) {
 	for _, node := range nodes {
 		mod.AddNode(node)
 		hr.AddNode(node)
+		hr40.AddNode(node)
 		jh.AddNode(node)
 		mh.AddNode(node)
+		mh2039.AddNode(node)
 		rh.AddNode(node)
 		ah.AddNode(node)
 		dx.AddNode(node)
@@ -250,11 +294,18 @@ func TestDistribution(t *testing.T) {
 		modDistribution[node]++
 	}
 
-	// 测试哈希环分布
+	// 测试哈希环分布(160个虚拟节点)
 	hrDistribution := make(map[string]int)
 	for _, key := range keys {
 		node := hr.GetNode(key)
 		hrDistribution[node]++
+	}
+
+	// 测试哈希环分布(40个虚拟节点)
+	hr40Distribution := make(map[string]int)
+	for _, key := range keys {
+		node := hr40.GetNode(key)
+		hr40Distribution[node]++
 	}
 
 	// 测试跳跃哈希分布
@@ -264,11 +315,18 @@ func TestDistribution(t *testing.T) {
 		jhDistribution[node]++
 	}
 
-	// 测试Maglev哈希分布
+	// 测试Maglev哈希分布(65537表长)
 	mhDistribution := make(map[string]int)
 	for _, key := range keys {
 		node := mh.GetNode(key)
 		mhDistribution[node]++
+	}
+
+	// 测试Maglev哈希分布(2039表长)
+	mh2039Distribution := make(map[string]int)
+	for _, key := range keys {
+		node := mh2039.GetNode(key)
+		mh2039Distribution[node]++
 	}
 
 	// 测试Rendezvous哈希分布
@@ -278,7 +336,7 @@ func TestDistribution(t *testing.T) {
 		rhDistribution[node]++
 	}
 
-	// 测试AnchorHash分布
+	// 测试AnchorHash分布(2000长度)
 	ahDistribution := make(map[string]int)
 	for _, key := range keys {
 		node := ah.GetNode(key)
@@ -313,8 +371,10 @@ func TestDistribution(t *testing.T) {
 	// 计算标准差（峰均值比相关）
 	modStdDev := calculateStdDev(modDistribution, avg, nodeCount)
 	hrStdDev := calculateStdDev(hrDistribution, avg, nodeCount)
+	hr40StdDev := calculateStdDev(hr40Distribution, avg, nodeCount)
 	jhStdDev := calculateStdDev(jhDistribution, avg, nodeCount)
 	mhStdDev := calculateStdDev(mhDistribution, avg, nodeCount)
+	mh2039StdDev := calculateStdDev(mh2039Distribution, avg, nodeCount)
 	rhStdDev := calculateStdDev(rhDistribution, avg, nodeCount)
 	ahStdDev := calculateStdDev(ahDistribution, avg, nodeCount)
 	dxStdDev := calculateStdDev(dxDistribution, avg, nodeCount)
@@ -324,11 +384,13 @@ func TestDistribution(t *testing.T) {
 	t.Logf("Distribution test with %d nodes and %d keys", nodeCount, keyCount)
 	t.Logf("Average assignments per node: %d", avg)
 	t.Logf("Mod Hash Std Dev: %.2f", modStdDev)
-	t.Logf("Hash Ring Std Dev: %.2f", hrStdDev)
+	t.Logf("Hash Ring(160 vnodes) Std Dev: %.2f", hrStdDev)
+	t.Logf("Hash Ring(40 vnodes) Std Dev: %.2f", hr40StdDev)
 	t.Logf("Jump Hash Std Dev: %.2f", jhStdDev)
-	t.Logf("Maglev Hash Std Dev: %.2f", mhStdDev)
+	t.Logf("Maglev Hash(65537 size) Std Dev: %.2f", mhStdDev)
+	t.Logf("Maglev Hash(2039 size) Std Dev: %.2f", mh2039StdDev)
 	t.Logf("Rendezvous Hash Std Dev: %.2f", rhStdDev)
-	t.Logf("AnchorHash Std Dev: %.2f", ahStdDev)
+	t.Logf("AnchorHash(2000 size) Std Dev: %.2f", ahStdDev)
 	t.Logf("DxHash Std Dev: %.2f", dxStdDev)
 	t.Logf("Multi-Probe CH(k=5) Std Dev: %.2f", mpch5StdDev)
 	t.Logf("Multi-Probe CH(k=21) Std Dev: %.2f", mpch21StdDev)
@@ -362,8 +424,10 @@ func TestNodeAddition(t *testing.T) {
 	// 初始化各种算法
 	mod := consistent_hashing.NewModHash()
 	hr := consistent_hashing.NewHashRing(160)
+	hr40 := consistent_hashing.NewHashRing(40) // 添加40个虚拟节点的测试
 	jh := consistent_hashing.NewJumpHash()
 	mh := consistent_hashing.NewMaglevHash(65537)
+	mh2039 := consistent_hashing.NewMaglevHash(2039) // 添加2039表长的测试
 	dx := consistent_hashing.NewDxHash()
 
 	// 添加初始节点
@@ -373,23 +437,29 @@ func TestNodeAddition(t *testing.T) {
 		initialNodesList[i] = node
 		mod.AddNode(node)
 		hr.AddNode(node)
+		hr40.AddNode(node)
 		jh.AddNode(node)
 		mh.AddNode(node)
+		mh2039.AddNode(node)
 		dx.AddNode(node)
 	}
 
 	// 测试添加节点前的分配情况
 	modBefore := make([]string, keyCount)
 	hrBefore := make([]string, keyCount)
+	hr40Before := make([]string, keyCount)
 	jhBefore := make([]string, keyCount)
 	mhBefore := make([]string, keyCount)
+	mh2039Before := make([]string, keyCount)
 	dxBefore := make([]string, keyCount)
 
 	for i, key := range keys {
 		modBefore[i] = mod.GetNode(key)
 		hrBefore[i] = hr.GetNode(key)
+		hr40Before[i] = hr40.GetNode(key)
 		jhBefore[i] = jh.GetNode(key)
 		mhBefore[i] = mh.GetNode(key)
+		mh2039Before[i] = mh2039.GetNode(key)
 		dxBefore[i] = dx.GetNode(key)
 	}
 
@@ -418,7 +488,7 @@ func TestNodeAddition(t *testing.T) {
 	t.Logf("ModHash: Adding %d nodes to %d initial nodes took %v, %d keys remapped (%.2f%%)",
 		addCount, initialNodes, elapsed, changed, float64(changed)*100/float64(keyCount))
 
-	// 测试HashRing
+	// 测试HashRing(160个虚拟节点)
 	start = time.Now()
 	for i := 0; i < addCount; i++ {
 		hr.AddNode(newNodes[i])
@@ -434,7 +504,26 @@ func TestNodeAddition(t *testing.T) {
 		}
 	}
 
-	t.Logf("HashRing: Adding %d nodes to %d initial nodes took %v, %d keys remapped (%.2f%%)",
+	t.Logf("HashRing(160 vnodes): Adding %d nodes to %d initial nodes took %v, %d keys remapped (%.2f%%)",
+		addCount, initialNodes, elapsed, changed, float64(changed)*100/float64(keyCount))
+
+	// 测试HashRing(40个虚拟节点)
+	start = time.Now()
+	for i := 0; i < addCount; i++ {
+		hr40.AddNode(newNodes[i])
+	}
+	elapsed = time.Since(start)
+
+	hr40After := make([]string, keyCount)
+	changed = 0
+	for i, key := range keys {
+		hr40After[i] = hr40.GetNode(key)
+		if hr40Before[i] != hr40After[i] {
+			changed++
+		}
+	}
+
+	t.Logf("HashRing(40 vnodes): Adding %d nodes to %d initial nodes took %v, %d keys remapped (%.2f%%)",
 		addCount, initialNodes, elapsed, changed, float64(changed)*100/float64(keyCount))
 
 	// 测试JumpHash
@@ -456,7 +545,7 @@ func TestNodeAddition(t *testing.T) {
 	t.Logf("JumpHash: Adding %d nodes to %d initial nodes took %v, %d keys remapped (%.2f%%)",
 		addCount, initialNodes, elapsed, changed, float64(changed)*100/float64(keyCount))
 
-	// 测试MaglevHash
+	// 测试MaglevHash(65537表长)
 	start = time.Now()
 	for i := 0; i < addCount; i++ {
 		mh.AddNode(newNodes[i])
@@ -472,7 +561,26 @@ func TestNodeAddition(t *testing.T) {
 		}
 	}
 
-	t.Logf("MaglevHash: Adding %d nodes to %d initial nodes took %v, %d keys remapped (%.2f%%)",
+	t.Logf("MaglevHash(65537 size): Adding %d nodes to %d initial nodes took %v, %d keys remapped (%.2f%%)",
+		addCount, initialNodes, elapsed, changed, float64(changed)*100/float64(keyCount))
+
+	// 测试MaglevHash(2039表长)
+	start = time.Now()
+	for i := 0; i < addCount; i++ {
+		mh2039.AddNode(newNodes[i])
+	}
+	elapsed = time.Since(start)
+
+	mh2039After := make([]string, keyCount)
+	changed = 0
+	for i, key := range keys {
+		mh2039After[i] = mh2039.GetNode(key)
+		if mh2039Before[i] != mh2039After[i] {
+			changed++
+		}
+	}
+
+	t.Logf("MaglevHash(2039 size): Adding %d nodes to %d initial nodes took %v, %d keys remapped (%.2f%%)",
 		addCount, initialNodes, elapsed, changed, float64(changed)*100/float64(keyCount))
 
 	// 测试DxHash
