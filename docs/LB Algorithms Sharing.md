@@ -89,7 +89,7 @@ IWRR 尽量强调了轮询的处理，保证调度初期是以轮询的方式选
 
 实验统计结果确定
 
-![图片](./media/media/image1.png)
+![图片](./media/image1.png)
 
 每一轮调度计算控制在 100k 纳秒以内
 
@@ -172,7 +172,7 @@ LB 本身存储 RS 是以链表和哈希桶的方式，需要再额外以数组�
 1. 首先需要保证哈希明文的唯一和哈希结果尽量分散，尤其当 **RS 数量较少**的时候，若再遇到哈希碰撞就会导致很明显的调度不均 -> **填充虚拟节点**
 2. **RS 数量变化**会导致之前哈希的结果都发生改变 -> **一致性哈希**降低影响
 
-![图片](./media/media/image2.png){width="5.5in"
+![图片](./media/image2.png){width="5.5in"
 height="1.4780511811023622in"}
 
 ### 一致性哈希
@@ -191,15 +191,15 @@ height="1.4780511811023622in"}
 
 当往一个哈希环中新增一个槽位时，只有被新增槽位拦下来的哈希结果的映射结果是变化的
 
-![图片](./media/media/image3.jpeg)
+![图片](./media/image3.jpeg)
 
 当从一个哈希环中移除一个槽位时，被删除槽位的映射会转交给下一槽位，其他槽位不受影响
 
-![图片](./media/media/image4.jpeg)
+![图片](./media/image4.jpeg)
 
 在实际应用中，还可以对槽位（节点）添加**权重**，通过构建很多指向真实节点的虚拟节点，也叫影子节点。通常采用一个节点创建 40 个影子节点，节点越多映射分布越均匀。影子节点之间是平权的，选中影子节点，就代表选中了背后的真实节点。权重越大的节点，影子节点越多，被选中的概率就越大。但是需要注意的是，影子节点增加了内存消耗和查询开销，权重的调整也会带来数据迁移的工作
 
-![图片](./media/media/image5.jpeg)
+![图片](./media/image5.jpeg)
 
 **优势：**一致性哈希和权重分配
 
@@ -257,7 +257,7 @@ int32_t JumpConsistentHash(uint64_t key, int32_t num_buckets) {
 
 由于是通过伪随机的方式，并将哈希 key 作为伪随机数种子，对于给定的哈希槽位数量，key 的映射结果都是唯一确定的
 
-![图片](./media/media/image6.jpeg)
+![图片](./media/image6.jpeg)
 
 「伪随机哈希优化」
 
@@ -330,7 +330,7 @@ int consistent_hash(int key, int num_buckets) {
 
 基本思想是在哈希环的基础上查找时对 key 进行 k 次哈希，返回所有哈希查询中距离最近的节点。k 的值由所需的方差决定。对于峰均值比 1.05（负载最重的节点最多比平均值高 5%），k 为 21。作为对比，哈希环算法需要 700lnN 个副本。对于 100 个节点，这相当于超过 1MB 内存
 
-![图片](./media/media/image7.jpeg)
+![图片](./media/image7.jpeg)
 
 #### Maglev 一致性哈希
 
@@ -344,15 +344,15 @@ int consistent_hash(int key, int num_buckets) {
 
 建立一个槽位查找表，对输入 key 哈希取余就可以映射到一个槽位。计算查找表需要为每个槽位生成一个偏好序列 Permutation，按照偏好序列中数字的顺序，每个槽位轮流填充查找表。如果填充的目标位置已被占用，则顺延该序列的下一个目标位置填充
 
-![图片](./media/media/image8.jpeg)
+![图片](./media/image8.jpeg)
 
 伪代码
 
-![图片](./media/media/image9.png)
+![图片](./media/image9.png)
 
 由于存储了偏好序列表，槽位的变动对查找表的影响就是可控的了
 
-![图片](./media/media/image10.jpeg)
+![图片](./media/image10.jpeg)
 
 生成偏好序列的方式有很多，只需要保证其随机和均匀。查找表的长度 M 应是一个质数，这样可以减少哈希碰撞和聚集，让分布更均匀。查找表建立时间 O(MlogM)，最坏 O(M^2)
 
@@ -379,7 +379,7 @@ $$
 
 实验设置：1000 台后端服务器，对每个 k-failure 重新生成查找表并检查入口变化，重复 200 次取平均值
 
-![图片](./media/media/image11.png)
+![图片](./media/image11.png)
 
 按照实验结果，M = 65537，k = 5 时，只有约 1180 个入口会变化 (约 1.8%)
 
@@ -421,11 +421,11 @@ $$
 
 设计了一个 next 数组用来表示当前桶不可用时应该从哪找下一个候选桶，在节点增删时维护 next 指针
 
-![anchorHash removal](./media/media/anchorHash removal.png)
+![anchorHash removal](./media/anchorHash removal.png)
 
 GetBucket 时间为 $1+ln(\dfrac{a}{w})$
 
-![图片](./media/media/image12.jpeg)
+![图片](./media/image12.jpeg)
 
 M: Mapper from anchor A to rs S
 
@@ -455,7 +455,7 @@ R: Removed label
 
 * DxHash 一致性哈希
 
-![](./media/media/DxHash.png)
+![](./media/DxHash.png)
 
 NSArray 是长度为大于 `RS_num` 的最小 $2^n$ 值，例如 RS 是 4 台，则 NSArray 长度为 8
 
@@ -471,7 +471,7 @@ $$
 
 NSArray 不够时进行两倍扩容+节点迁移
 
-![](./media/media/DxHash Scaling.png)
+![](./media/DxHash Scaling.png)
 
 可以以类似切片的形式来保证不会需要节点迁移
 
@@ -483,11 +483,11 @@ NSArray 不够时进行两倍扩容+节点迁移
 
 #### 一致性哈希算法对比
 
-![图片](./media/media/image13.jpeg)
+![图片](./media/image13.jpeg)
 
 不同节点数量时单次查询的时间（纳秒）
 
-![图片](./media/media/image14.jpeg)
+![图片](./media/image14.jpeg)
 
 * 𝑉：ring 中每个物理节点对应的虚拟节点个数
 * 𝑊：集群中的 working 节点数目
@@ -536,7 +536,7 @@ NSArray 不够时进行两倍扩容+节点迁移
 
 调度时间优化至 O(logN)。把原始节点分成若干个虚拟组，虚拟组一层一层组成一个“骨架”，然后在虚拟组中按照 Rendezvous 哈希计算出最大的节点，从而得到下一层的虚拟组，再在下一层的虚拟组中按同样的方法计算，直到找到最下方的真实节点
 
-![图片](./media/media/image15.gif)
+![图片](./media/image15.gif)
 
 「扩展思考」
 
@@ -548,7 +548,7 @@ NSArray 不够时进行两倍扩容+节点迁移
 
 > [LSH 位置敏感哈希入门](https://randorithms.com/2019/09/19/Visual-LSH.html)
 
-![图片](./media/media/image16.png)
+![图片](./media/image16.png)
 
 「进阶」
 
@@ -809,8 +809,8 @@ effective_weight: 动态的有效权重，初始化为 weight。当和 RS 通信
 
 ### 爱奇艺 DPVS
 
-![图片](./media/media/image17.png)
-![图片](./media/media/image18.png)
+![图片](./media/image17.png)
+![图片](./media/image18.png)
 
 > [Cooper](https://cooper.didichuxing.com/docs2/document/2202486120863) from 晓宇
 
@@ -830,7 +830,7 @@ effective_weight: 动态的有效权重，初始化为 weight。当和 RS 通信
 
 LB 之间不同步状态，连接保持方案类似 Maglev：所有 LB 自己决定，但保证对于相同的 4-tuple 会转发相同的 RS。所有 LB 都接收由控制平面统一下发的转发表，通过 4-tuple-hash 查表。转发表中每个 RS 可以设置多个 bucket（权重），RS 下线只修改对应 bucket
 
-![图片](./media/media/image19.png)
+![图片](./media/image19.png)
 
 由于没有 ct，它通过备份转发表 (second hop) 方式来继续先前的转发。当一个 RS 机器收到包时，先检查当前机器有没有这个 TCP socket，如果没有就转发到 second hop
 
@@ -841,14 +841,14 @@ LB 之间不同步状态，连接保持方案类似 Maglev：所有 LB 自己决
 
 ### GitHub GLB
 
-![图片](./media/media/image20.jpeg)
+![图片](./media/image20.jpeg)
 
 「转发过程」
 
 1. 根据 hash 查找转发表，找到对应的 2 个 RS，一个是主 RS 一个是备 RS，然后转发到主 RS
 2. 主 RS 收到包之后，检查这个包是不是属于自己机器上的连接，如果是，就交给协议栈处理，如果不是，就转发到备 RS（备 RS 的地址记录在 GLB 发过来的包中）
 
-![图片](./media/media/image21.jpeg)
+![图片](./media/image21.jpeg)
 
 「转发表」
 
@@ -884,7 +884,7 @@ LB 之间不同步状态，连接保持方案类似 Maglev：所有 LB 自己决
 
 DSR 转发模式，Maglev 不会做 NAT，通过 GRE 将二层包封装进 IP 包里（需要 MSS 预留空间）
 
-![图片](./media/media/image22.png)
+![图片](./media/image22.png)
 
 上图是包的转发流程，绿色的是包经过的路径
 
